@@ -1,10 +1,10 @@
 class BB:
-    # Static Helper Bitboards
+    # Helper Bitboards
     white_squares = 0x55AA55AA55AA55AA
     black_squares = 0xAA55AA55AA55AA55
     full          = 0xFFFFFFFFFFFFFFFF
     empty         = 0x0000000000000000
-    # File and Ranks
+    # Files and Ranks
     file_a        = 0x0101010101010101
     file_b        = 0x0202020202020202
     file_c        = 0x0404040404040404
@@ -22,7 +22,7 @@ class BB:
     rank_7        = 0x00FF000000000000
     rank_8        = 0xFF00000000000000
     
-    def __init__(self) -> None:
+    def __init__(self):
         # White Pieces
         self.white_pawns   = 0x000000000000FF00
         self.white_knights = 0x0000000000000042
@@ -44,7 +44,7 @@ class BB:
         self.non_occupied  = self.full ^ self.occupied
 
     def print_board(self):
-        board = [""] * 64
+        board = [''] * 64
         for i in range(64):
             mask = 1 << i
             if self.white_pawns & mask:
@@ -74,6 +74,13 @@ class BB:
             else:
                 board[i] = '.'
         
-        for rank in range(7, -1, -1):
-            print(' '.join(board[rank*8:(rank+1)*8]))
-        
+        for i in range(7, -1, -1):
+            print('['+' '.join(board[i*8:(i+1)*8])+']')
+
+    def print_bb(self, bb: int):
+        board = ['0'] * 64
+        for i in range(64):
+            if((1 << i) & bb != 0): 
+                board[i] = '1'
+        for i in range(7, -1, -1):
+            print('['+' '.join(board[i*8:(i+1)*8])+']')
