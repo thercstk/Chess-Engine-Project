@@ -9,3 +9,7 @@ Nobody is meant to read this while i still work on the engine, but i want to jou
 the changes progressively, not to make a giant push with all the work.
 
 The first thing i need is a good board representation. We'll see how it goes.
+
+12/6/2026
+
+Currently strugling with organization. First commits will tend to have positional changes.
