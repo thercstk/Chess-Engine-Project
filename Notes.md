@@ -18,3 +18,9 @@ Currently strugling with organization. First commits will tend to have positiona
 
 After some minimal changes (and the attack tables, of course) i've decided to implement De Brujin BitScan for a 
 minimal performance boost. And, if i stay awake, maybe i can get to implement the attack tables for the sliding pieces.
+
+17/6/2026
+
+Finally finished the attack tables for the sliding pieces, Jesus. Took me half a day, i'm tired. 
+With this i think i can continue to the part of the engine which i like most. Search + Evaluation. Although i first need a move 
+generating function. I'm gonna take a break and decide what to do next. I'm happy :D.
