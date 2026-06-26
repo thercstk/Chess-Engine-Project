@@ -24,3 +24,12 @@ minimal performance boost. And, if i stay awake, maybe i can get to implement th
 Finally finished the attack tables for the sliding pieces, Jesus. Took me half a day, i'm tired. 
 With this i think i can continue to the part of the engine which i like most. Search + Evaluation. Although i first need a move 
 generating function. I'm gonna take a break and decide what to do next. I'm happy :D.
+
+22/6/2026
+
+After a few days of rest, i'm going to continue with the move generation. I will be starting to use Conventional Commits as a standart from now on.
+Hopefully this won't take me as long as the attack tables for the sliding pieces.
+
+25/6/2026
+
+Took a while, now it's just me and the apply_move() and undo_move() functions. I know it's my first time, but God i hate this part.

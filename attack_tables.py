@@ -242,11 +242,29 @@ def init_tables():
 #             LOOKUP             #
 # ============================== #
 
-def pawn_attacks(bb, color):
+def pawn_attacks_left(bb, color):
     if color == WHITE:
-        return ((bb << 7) & ~FILE_H) | ((bb << 9) & ~FILE_A)
+        return ((bb << 7) & ~FILE_H)
     else:
-        return ((bb >> 7) & ~FILE_A) | ((bb >> 9) & ~FILE_H)
+        return ((bb >> 9) & ~FILE_H)
+
+def pawn_attacks_right(bb, color):
+    if color == WHITE:
+        return ((bb << 9) & ~FILE_A)
+    else:
+        return ((bb >> 7) & ~FILE_A)
+
+def pawn_push(sq, color):
+    if color == WHITE:
+        return (sq << 8) & FULL_BOARD
+    else:
+        return (sq >> 8)
+
+def pawn_d_push(sq, color, occupied):
+    sq = sq & RANK_2 if color == WHITE else RANK_7
+    sq = (sq << 8 if color == WHITE else sq >> 8) & ~occupied
+    sq = (sq << 8 if color == WHITE else sq >> 8) & ~occupied
+    return sq
 
 def knight_attacks(sq):
     return KNIGHT_ATTACKS[sq]
