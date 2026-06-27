@@ -4,7 +4,7 @@ import attack_tables as at
 import move as mv
 import utils
 
-def is_attacked(sq, attacker, board):
+def _is_attacked(sq, attacker, board):
     occupied = board.occupied
     return (
         at.pawn_attacks_left(1 << sq, 1 - attacker) & board.pieces[attacker][PAWNS] or
@@ -204,10 +204,10 @@ def generate_moves(board: Board) -> list:
 
     # Castling generation
     if turn == WHITE:
-        attacked_ks = (is_attacked(5, 1 - turn, board) or
-                       is_attacked(6, 1 - turn, board))
-        attacked_qs = (is_attacked(2, 1 - turn, board) or
-                       is_attacked(3, 1 - turn, board))
+        attacked_ks = (_is_attacked(5, 1 - turn, board) or
+                       _is_attacked(6, 1 - turn, board))
+        attacked_qs = (_is_attacked(2, 1 - turn, board) or
+                       _is_attacked(3, 1 - turn, board))
         if not attacked_ks and castling_ks and not ks_squares[turn]:
             move = mv.make_move(4, 6, king_castle)
             movelist.append(move)
@@ -215,10 +215,10 @@ def generate_moves(board: Board) -> list:
             move = mv.make_move(4, 2, queen_castle)
             movelist.append(move)
     else:
-        attacked_ks = (is_attacked(61, 1 - turn, board) or
-                       is_attacked(62, 1 - turn, board))
-        attacked_qs = (is_attacked(58, 1 - turn, board) or
-                       is_attacked(59, 1 - turn, board))
+        attacked_ks = (_is_attacked(61, 1 - turn, board) or
+                       _is_attacked(62, 1 - turn, board))
+        attacked_qs = (_is_attacked(58, 1 - turn, board) or
+                       _is_attacked(59, 1 - turn, board))
         if not attacked_ks and castling_ks and not ks_squares[turn]:
             move = mv.make_move(60, 62, king_castle)
             movelist.append(move)

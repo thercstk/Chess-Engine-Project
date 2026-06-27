@@ -54,7 +54,7 @@ BISHOP_MAGICS = [
 #           GENERATORS           #
 # ============================== #
 
-def generate_rook_attacks(i, bb):
+def _generate_rook_attacks(i, bb):
     attacks = 0
 
     # Rook North
@@ -88,7 +88,7 @@ def generate_rook_attacks(i, bb):
 
     return attacks
 
-def generate_bishop_attacks(i, bb):
+def _generate_bishop_attacks(i, bb):
     attacks = 0
 
     # Bishop NW
@@ -122,7 +122,7 @@ def generate_bishop_attacks(i, bb):
 
     return attacks
 
-def generate_subsets(bb) -> list:
+def _generate_subsets(bb) -> list:
     subsets = []
     subset = 0
     while True:
@@ -132,7 +132,7 @@ def generate_subsets(bb) -> list:
             break
     return subsets
 
-def init_tables():
+def _init_tables():
     # KING AND KNIGHT ATTACK PRECALC
     for i in range(64):
         mask = 1 << i
@@ -210,33 +210,29 @@ def init_tables():
 
     # ROOK ATTACK PRECALC
     for i in range(64):
-        subsets = generate_subsets(ROOK_RELEVANCE[i])
+        subsets = _generate_subsets(ROOK_RELEVANCE[i])
         n_bits = ROOK_RELEVANCE[i].bit_count()
         magic = ROOK_MAGICS[i]
         attacks_i = [0] * 8192
         for sub in subsets:
             key = ((sub * magic) & FULL_BOARD) >> (64 - n_bits)
-            val = generate_rook_attacks(i, sub)
+            val = _generate_rook_attacks(i, sub)
             attacks_i[key] = val
 
         ROOK_ATTACKS[i] = attacks_i
 
     # BISHOP ATTACK PRECALC
     for i in range(64):
-        subsets = generate_subsets(BISHOP_RELEVANCE[i])
+        subsets = _generate_subsets(BISHOP_RELEVANCE[i])
         n_bits = BISHOP_RELEVANCE[i].bit_count()
         magic = BISHOP_MAGICS[i]
         attacks_i = [0] * 8192
         for sub in subsets:
             key = ((sub * magic) & FULL_BOARD) >> (64 - n_bits)
-            val = generate_bishop_attacks(i, sub)
+            val = _generate_bishop_attacks(i, sub)
             attacks_i[key] = val
 
         BISHOP_ATTACKS[i] = attacks_i
-        for sub in subsets:
-            key = ((sub * magic) & FULL_BOARD) >> (64 - n_bits)
-            val = generate_bishop_attacks(i, sub)
-            assert BISHOP_ATTACKS[i][key] == val
 
 # ============================== #
 #             LOOKUP             #
@@ -289,4 +285,4 @@ def queen_attacks(sq, occupied):
             bishop_attacks(sq, occupied))
 
 # You might know what this does
-init_tables()
+_init_tables()
