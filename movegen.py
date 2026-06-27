@@ -4,6 +4,11 @@ import attack_tables as at
 import move as mv
 import utils
 
+PUSH   = [-8, 8]
+D_PUSH = [-16, 16]
+ATK_L  = [7, -9]
+ATK_R  = [9, -7]
+
 def _is_attacked(sq, attacker, board):
     occupied = board.occupied
     return (
@@ -16,18 +21,30 @@ def _is_attacked(sq, attacker, board):
         at.king_attacks(sq) & board.pieces[attacker][KING]
     )
 
+def _generate_piece_moves(sq, attacks, enemy_occ, occupied, movelist):
+    for bb, flag in [
+        (attacks & ~occupied, quiet_move),
+        (attacks & enemy_occ, capture)
+    ]:
+        while bb:
+            dst = utils.scan(bb)
+            bb &= bb - 1
+            move = mv.make_move(sq, dst, flag)
+            movelist.append(move)
+
 def generate_moves(board: Board) -> list:
     movelist = []
-
-    PUSH   = [-8, 8]
-    D_PUSH = [-16, 16]
-    ATK_L  = [7, -9]
-    ATK_R  = [9, -7]
 
     turn        = board.turn
     enemy_occ   = board.occupancy[1 - turn]
     occupied    = board.occupied
     passant_sq  = board.en_passant_sq
+
+    castling_rights = board.castling_rights
+    castling_ks = castling_rights & (1 << (2 * turn))
+    castling_qs = castling_rights & (1 << (2 * turn + 1))
+    ks_squares  = [(F1 | G1) & occupied, (F8 | G8) & occupied]
+    qs_squares  = [(B1 | C1 | D1) & occupied, (B8 | C8 | D8) & occupied]
 
     pawns   = board.pieces[turn][PAWNS]
     knights = board.pieces[turn][KNIGHTS]
@@ -36,17 +53,14 @@ def generate_moves(board: Board) -> list:
     queens  = board.pieces[turn][QUEENS]
     king    = board.pieces[turn][KING]
 
-    castling_rights = board.castling_rights
-    castling_ks = castling_rights & (1 << (2 * turn))
-    castling_qs = castling_rights & (1 << (2 * turn + 1))
-    ks_squares  = [(F1 | G1) & occupied, (F8 | G8) & occupied]
-    qs_squares  = [(B1 | C1 | D1) & occupied, (B8 | C8 | D8) & occupied]
-
     # Pawn attacks generation
-    d_pushes      = at.pawn_d_push(pawns, turn, occupied)
-    attacks_left  = at.pawn_attacks_left(pawns, turn) & enemy_occ
-    attacks_right = at.pawn_attacks_right(pawns, turn) & enemy_occ
     pushes        = at.pawn_push(pawns, turn) & ~occupied
+    attacks_lraw  = at.pawn_attacks_left(pawns, turn)
+    attacks_rraw  = at.pawn_attacks_right(pawns, turn)
+    attacks_left  = attacks_lraw & enemy_occ
+    attacks_right = attacks_rraw & enemy_occ
+
+    d_pushes      = at.pawn_d_push(pawns, turn, occupied)
 
     attacks_left_np  = attacks_left & ~RANK_8 if turn == WHITE else attacks_left & ~RANK_1
     attacks_left_p   = attacks_left &  RANK_8 if turn == WHITE else attacks_left &  RANK_1
@@ -56,15 +70,15 @@ def generate_moves(board: Board) -> list:
     pushes_np = pushes & ~RANK_8 if turn == WHITE else pushes & ~RANK_1
     pushes_p  = pushes &  RANK_8 if turn == WHITE else pushes &  RANK_1
 
-    passant_left  = at.pawn_attacks_left(pawns, turn) & passant_sq
-    passant_right = at.pawn_attacks_right(pawns, turn) & passant_sq
-     
+    passant_left  = attacks_lraw & passant_sq
+    passant_right = attacks_rraw & passant_sq
+
     while d_pushes:
         sq = utils.scan(d_pushes)
         d_pushes &= d_pushes - 1
         move = mv.make_move(sq + D_PUSH[turn], sq, double_pawn)
         movelist.append(move)
-    
+
     while attacks_left_np:
         sq = utils.scan(attacks_left_np)
         attacks_left_np &= attacks_left_np - 1
@@ -118,89 +132,34 @@ def generate_moves(board: Board) -> list:
     while knights:
         sq = utils.scan(knights)
         knights &= knights - 1
-        all_attacks = at.knight_attacks(sq)
-        attacks_nocap = all_attacks & ~occupied
-        attacks_cap = all_attacks & enemy_occ
-        while attacks_nocap:
-            dst = utils.scan(attacks_nocap)
-            attacks_nocap &= attacks_nocap -1
-            move = mv.make_move(sq, dst, quiet_move)
-            movelist.append(move)
-        while attacks_cap:
-            dst = utils.scan(attacks_cap)
-            attacks_cap &= attacks_cap -1
-            move = mv.make_move(sq, dst, capture)
-            movelist.append(move)
-    
+        attacks = at.knight_attacks(sq)
+        _generate_piece_moves(sq, attacks, enemy_occ, occupied, movelist)
+
     # Bishop generation
     while bishops:
         sq = utils.scan(bishops)
         bishops &= bishops - 1
-        all_attacks = at.bishop_attacks(sq, occupied)
-        attacks_nocap = all_attacks & ~occupied
-        attacks_cap = all_attacks & enemy_occ
-        while attacks_nocap:
-            dst = utils.scan(attacks_nocap)
-            attacks_nocap &= attacks_nocap -1
-            move = mv.make_move(sq, dst, quiet_move)
-            movelist.append(move)
-        while attacks_cap:
-            dst = utils.scan(attacks_cap)
-            attacks_cap &= attacks_cap -1
-            move = mv.make_move(sq, dst, capture)
-            movelist.append(move)
-    
+        attacks = at.bishop_attacks(sq, occupied)
+        _generate_piece_moves(sq, attacks, enemy_occ, occupied, movelist)
+
     # Rook generation
     while rooks:
         sq = utils.scan(rooks)
         rooks &= rooks - 1
-        all_attacks = at.rook_attacks(sq, occupied)
-        attacks_nocap = all_attacks & ~occupied
-        attacks_cap = all_attacks & enemy_occ
-        while attacks_nocap:
-            dst = utils.scan(attacks_nocap)
-            attacks_nocap &= attacks_nocap -1
-            move = mv.make_move(sq, dst, quiet_move)
-            movelist.append(move)
-        while attacks_cap:
-            dst = utils.scan(attacks_cap)
-            attacks_cap &= attacks_cap -1
-            move = mv.make_move(sq, dst, capture)
-            movelist.append(move)
+        attacks = at.rook_attacks(sq, occupied)
+        _generate_piece_moves(sq, attacks, enemy_occ, occupied, movelist)
 
     # Queen generation
     while queens:
         sq = utils.scan(queens)
         queens &= queens - 1
-        all_attacks = at.queen_attacks(sq, occupied)
-        attacks_nocap = all_attacks & ~occupied
-        attacks_cap = all_attacks & enemy_occ
-        while attacks_nocap:
-            dst = utils.scan(attacks_nocap)
-            attacks_nocap &= attacks_nocap -1
-            move = mv.make_move(sq, dst, quiet_move)
-            movelist.append(move)
-        while attacks_cap:
-            dst = utils.scan(attacks_cap)
-            attacks_cap &= attacks_cap -1
-            move = mv.make_move(sq, dst, capture)
-            movelist.append(move)
+        attacks = at.queen_attacks(sq, occupied)
+        _generate_piece_moves(sq, attacks, enemy_occ, occupied, movelist)
 
     # King generation
     sq = utils.scan(king)
-    all_attacks = at.king_attacks(sq)
-    attacks_nocap = all_attacks & ~occupied
-    attacks_cap = all_attacks & enemy_occ
-    while attacks_nocap:
-        dst = utils.scan(attacks_nocap)
-        attacks_nocap &= attacks_nocap -1
-        move = mv.make_move(sq, dst, quiet_move)
-        movelist.append(move)
-    while attacks_cap:
-        dst = utils.scan(attacks_cap)
-        attacks_cap &= attacks_cap -1
-        move = mv.make_move(sq, dst, capture)
-        movelist.append(move)
+    attacks = at.king_attacks(sq)
+    _generate_piece_moves(sq, attacks, enemy_occ, occupied, movelist)
 
     # Castling generation
     if turn == WHITE:
